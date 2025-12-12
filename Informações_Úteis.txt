@@ -1,0 +1,98 @@
+visão geral e Crua dos Modelos e Tabelas do BD
+
+Usuario(User)
+    id(Unico, Chave Primaria): int
+    nome: varchar(100)
+    email(Único): varchar(150), (Bloquear inputs que não sejam no formato de E-Mail)
+    senha_hash: varchar()
+    moeda(Ex.: BRL, USD, EUR, etc): varchar
+
+Conta
+    id(Chave Primaria)
+    id_usuario(ID do Usuario, Chave Estrangeira): int
+    nome: varchar(100)
+    tipo(Carteira, Banco, Cofre, etc): varchar(Enum(Carteira, Banco, Cofre, Investimento e Outros))
+    saldo_inicial: float
+    saldo_atual: float
+    limiete_credito(somente disponivel quando for do tipo Banco): float
+
+Categoria
+    id(Chave Primaria): int
+    usuario_id(ID do Usuario, Chave Estrangeira): int
+    nome: varchar(100)
+    tipo(para diferenciar entre categoria de gasto ou ganhos): varchar(Enum2(Despesa e Receita))
+
+Transação
+    id(Único, Chave Primaria): int
+    usuario_id(ID do Usuario, Chave Estrangeira): int
+    conta_id(ID do Usuario, Chave Estrangeira): int
+    descrição: varchar(500)
+    valor: float
+    tipo(Ganho ou Gasto): varchar(enum2(Despesa e Receita)<--Nota se os mesmos valores do Enum de Tipo)
+    data: Date
+    categoria_id(ID de Categoria, Chave Estrangeira): int
+
+Transferencia(Diferente de Transação este ocorre entre contas do Sistema)
+    id(Único, Chave Primaria): int
+    usuario_id(ID do Usuario, Chave Estrangeira): int
+    conta_origem_id(Por Padrão Assume o mesmo valor que usuario_id): int
+    conta_destino_id: int
+    valor: float
+    data: Date
+
+========================================
+Como rodar este projeto em OUTRA MÁQUINA
+========================================
+
+Pré-requisitos
+- Git instalado
+- Python 3.11+ e Poetry (ou virtualenv)
+- Flutter SDK e um navegador (Chrome) para rodar a interface web
+
+1) Clonar repositório
+     - git clone https://github.com/Kilinspray/progweb.git
+     - Entre na pasta do repositório e escolha as branches:
+         - Backend: `git checkout backend` (pasta `Projeto_Final/backend`)
+         - Frontend: `git checkout flutter-frontend` (pasta `Porjeto_Final_Front/frontend`) ou clone separado
+
+2) Backend (FastAPI)
+     - Vá para: Projeto_Final/backend
+     - Instale dependências:
+         poetry install
+     - Inicie o servidor (desenvolvimento):
+         poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+     - Verifique a documentação e endpoints em: http://127.0.0.1:8000/docs
+     - Observações:
+         - O banco padrão é SQLite (arquivo local); se quiser usar outro DB ajuste `database.py` e a variável `DATABASE_URL`.
+         - Ao inicializar, o app cria roles padrão (user/admin) se não existirem.
+         - Se faltar algum módulo nativo (ex: argon2), rode `poetry add argon2-cffi` ou `poetry install`.
+
+3) Frontend (Flutter Web)
+     - Vá para: Porjeto_Final_Front/frontend
+     - Obtenha dependências:
+         flutter pub get
+     - Rodar em modo desenvolvimento no Chrome:
+         flutter run -d chrome
+     - Build para produção (gera `build/web`):
+         flutter build web
+         # e sirva a pasta build/web, por exemplo:
+         python -m http.server -d build/web 8080
+     - Observações:
+         - O arquivo `lib/core/api_client.dart` aponta por padrão para `http://localhost:8000`. Se o backend estiver em outro host/porta, atualize `baseUrl`.
+
+4) Testes rápidos / debug
+     - Testar rota roles:
+         curl -X GET http://127.0.0.1:8000/roles/
+     - Ver rotas registradas (no backend):
+         poetry run python -c "from app.main import app; print([r.path for r in app.routes])"
+
+5) Problemas comuns
+     - Erro sobre hashing de senha (argon2): instale `argon2-cffi` via Poetry.
+     - 404 nas rotas: confirme que o servidor está rodando na porta correta e que o `baseUrl` do frontend aponta para ele.
+     - CORS: o backend já inclui CORSMiddleware permitindo origens, mas em produção restrinja os domínios.
+
+6) Dicas úteis
+     - Configure `git user.name` e `git user.email` na nova máquina antes de commitar.
+     - Use `flutter` em modo web para desenvolvimento rápido; para publicação use o `build/web` e um servidor estático.
+
+Se quiser, eu posso adicionar um `README.md` e scripts (`start-backend.sh`/`.bat` e `start-frontend.sh`/`.bat`) para automatizar estes passos.
