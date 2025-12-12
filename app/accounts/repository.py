@@ -51,3 +51,7 @@ def delete_account(db: Session, db_account: model.Account):
     db.delete(db_account)
     db.commit()
     return db_account
+
+def get_all_accounts(db: Session):
+    """Retorna todas as contas de todos os usuários (para admin)."""
+    return db.query(model.Account).all()

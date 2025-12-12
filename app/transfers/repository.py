@@ -43,3 +43,7 @@ def delete_transfer(db: Session, db_transfer: model.Transfer):
     db.delete(db_transfer)
     db.commit()
     return db_transfer
+
+def get_all_transfers(db: Session):
+    """Retorna todas as transferências de todos os usuários (para admin)."""
+    return db.query(model.Transfer).order_by(model.Transfer.data.desc()).all()

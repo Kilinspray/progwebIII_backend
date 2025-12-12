@@ -7,7 +7,7 @@ from pydantic import BaseModel
 # --- CONFIGURAÇÕES DE SEGURANÇA ---
 # Chave secreta para assinar os tokens JWT.
 # TROQUE POR UMA STRING LONGA E ALEATÓRIA GERADA POR VOCÊ!
-SECRET_KEY = "sua-chave-secreta-super-dificil-deve-ser-trocada"
+SECRET_KEY = "8f3a1b2c4d5e6f70"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 # Tempo de validade do token
 

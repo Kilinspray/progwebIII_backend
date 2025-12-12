@@ -2,19 +2,39 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from typing import cast # <-- Importa o 'cast' para corrigir o Pylance
+from decimal import Decimal
 
 from . import repository, model
 # Importa o 'service' de contas para reusar a lógica de validação
 from app.accounts import service as accounts_service
+from app.accounts import repository as accounts_repository
 
-# --- LÓGICA DE NEGÓCIO (Placeholder) ---
-def _update_account_balance(db: Session, id_account: int):
-    # TODO: Esta é a lógica mais importante do projeto, que será
-    # implementada no "Encontro 6: CRUD Completo e Relacionamentos".
-    # Esta função deve recalcular o saldo da 'account_id' com base
-    # no 'saldo_inicial' + todas as 'transactions' e 'transfers'.
-    # Por enquanto, não faz nada.
-    pass
+# --- LÓGICA DE NEGÓCIO ---
+def _update_account_balances_for_transfer(db: Session, conta_origem_id: int, conta_destino_id: int, valor: float, is_new: bool = True):
+    """
+    Atualiza os saldos das contas após uma transferência.
+    - Conta origem: subtrai o valor
+    - Conta destino: adiciona o valor
+    - is_new=True para nova transferência, is_new=False para reverter (delete)
+    """
+    db_origem = accounts_repository.get_account(db, id_account=conta_origem_id)
+    db_destino = accounts_repository.get_account(db, id_account=conta_destino_id)
+    
+    if db_origem and db_destino:
+        valor_decimal = Decimal(str(valor))
+        saldo_origem = Decimal(str(db_origem.saldo_atual))
+        saldo_destino = Decimal(str(db_destino.saldo_atual))
+        
+        if is_new:
+            db_origem.saldo_atual = float(saldo_origem - valor_decimal)
+            db_destino.saldo_atual = float(saldo_destino + valor_decimal)
+        else:
+            # Reverter transferência (ao deletar)
+            db_origem.saldo_atual = float(saldo_origem + valor_decimal)
+            db_destino.saldo_atual = float(saldo_destino - valor_decimal)
+        db.commit()
+        db.refresh(db_origem)
+        db.refresh(db_destino)
 
 # --- SERVIÇO DE CRIAÇÃO (CREATE) ---
 
@@ -61,9 +81,8 @@ def create_new_transfer(db: Session, transfer: model.TransferCreate, id_user: in
     )
     db_transfer = repository.create_transfer(db=db, transfer=transfer_with_origem, user_id=id_user)
     
-    # 6. Atualiza os saldos das contas (chama o placeholder)
-    _update_account_balance(db, id_account=conta_origem_id)
-    _update_account_balance(db, id_account=transfer.conta_destino_id)
+    # 6. Atualiza os saldos das contas
+    _update_account_balances_for_transfer(db, conta_origem_id, transfer.conta_destino_id, transfer.valor, is_new=True)
     
     return db_transfer
 
@@ -89,4 +108,20 @@ def get_transfer_by_id(db: Session, transfer_id: int, id_user: int):
 def delete_transfer_by_id(db: Session, transfer_id: int, id_user: int):
     """Deleta uma transferência, verificando a permissão."""
     db_transfer = get_transfer_by_id(db, transfer_id=transfer_id, id_user=id_user)
+    
+    # Reverter os saldos antes de deletar
+    _update_account_balances_for_transfer(
+        db,
+        cast(int, db_transfer.conta_origem_id),
+        cast(int, db_transfer.conta_destino_id),
+        cast(float, db_transfer.valor),
+        is_new=False
+    )
+    
     return repository.delete_transfer(db=db, db_transfer=db_transfer)
+
+# --- SERVIÇOS ADMIN ---
+
+def get_all_transfers_admin(db: Session):
+    """Retorna todas as transferências de todos os usuários (apenas para admin)."""
+    return repository.get_all_transfers(db)

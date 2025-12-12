@@ -6,8 +6,8 @@ from typing import List, cast # <-- Importa o 'cast' para corrigir o Pylance
 from database import get_db
 from . import service, model # Irá importar o service (próximo passo)
 # Importa o 'get_current_user' para proteger as rotas
-from app.auth.service import get_current_user
-from app.users.model import UserPublic # Importa o schema Pydantic 'UserPublic'
+from app.auth.service import get_current_user, require_role
+from app.users.model import UserPublic, User as SQLAlchemyUser # Importa o schema Pydantic 'UserPublic'
 
 # Este é o NOVO controller, agora protegido e usando SQLAlchemy
 router = APIRouter(prefix="/transfers", tags=["Transfers"])
@@ -58,3 +58,15 @@ def delete_transfer(
     """
     service.delete_transfer_by_id(db=db, transfer_id=transfer_id, id_user=cast(int, current_user.id))
     return
+
+# --- ENDPOINTS ADMIN ---
+
+@router.get("/admin/all", response_model=List[model.TransferPublic])
+def list_all_transfers_admin(
+    db: Session = Depends(get_db),
+    current_user: SQLAlchemyUser = Depends(require_role("admin"))
+):
+    """
+    Lista todas as transferências de todos os usuários (apenas para admin).
+    """
+    return service.get_all_transfers_admin(db=db)

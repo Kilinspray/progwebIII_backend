@@ -22,7 +22,7 @@ def create_user(db: Session, user: model.UserCreate):
         hashed_password=hashed_password, 
         nome=user.nome,
         moeda=user.moeda,
-        profile_image_url=user.profile_image_url,
+        profile_image_base64=user.profile_image_base64,
         role_id=user.role_id
     )
     db.add(db_user)

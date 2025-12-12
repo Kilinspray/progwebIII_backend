@@ -45,3 +45,9 @@ def delete_account_by_id(db: Session, id_account: int, id_user: int):
     db_account = get_account_by_id(db, id_account=id_account, id_user=id_user) # Reusa a lógica de validação
     # (Opcional) Adicionar lógicas, ex: não deletar se saldo != 0
     return repository.delete_account(db=db, db_account=db_account)
+
+# --- SERVIÇOS ADMIN ---
+
+def get_all_accounts_admin(db: Session):
+    """Retorna todas as contas de todos os usuários (apenas para admin)."""
+    return repository.get_all_accounts(db)

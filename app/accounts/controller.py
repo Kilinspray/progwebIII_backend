@@ -6,7 +6,7 @@ from typing import List
 from database import get_db
 from . import service, model
 # Importa o 'get_current_user' para proteger as rotas
-from app.auth.service import get_current_user
+from app.auth.service import get_current_user, require_role
 # Importa o 'User' do SQLAlchemy e 'UserPublic' do Pydantic
 from app.users.model import User as SQLAlchemyUser, UserPublic
 
@@ -78,3 +78,15 @@ def delete_account(
     service.delete_account_by_id(db=db, id_account=id_account, id_user=current_user.id)
     # Resposta 204 não deve ter corpo
     return
+
+# --- ENDPOINTS ADMIN ---
+
+@router.get("/admin/all", response_model=List[model.AccountPublic])
+def list_all_accounts_admin(
+    db: Session = Depends(get_db),
+    current_user: SQLAlchemyUser = Depends(require_role("admin"))
+):
+    """
+    Lista todas as contas de todos os usuários (apenas para admin).
+    """
+    return service.get_all_accounts_admin(db=db)

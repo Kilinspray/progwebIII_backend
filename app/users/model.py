@@ -1,5 +1,5 @@
 # app/users/model.py
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum, Text
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from database import Base
@@ -35,7 +35,7 @@ class User(Base):
     moeda = Column(Enum(CurrencyType), nullable=False, default=CurrencyType.BRL)
     
     # --- Campos adicionados pelo Encontro 5 ---
-    profile_image_url = Column(String, nullable=True)
+    profile_image_base64 = Column(Text, nullable=True)  # Armazena imagem em base64
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False) # Chave estrangeira
     
     # Relacionamento com a tabela Role
@@ -52,14 +52,14 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8)
     nome: str | None = Field(default=None, min_length=3, max_length=100)
     moeda: CurrencyType = Field(default=CurrencyType.BRL)
-    profile_image_url: str | None = None
+    profile_image_base64: str | None = None
     role_id: int = Field(description="ID do role (ex: 1 para admin, 2 para user)")
 
 class UserUpdate(BaseModel):
     """Schema para atualizar um usuário (apenas campos permitidos)"""
-    nome: str | None = Field(default=None, min_length=3, max_length=100)
+    nome: str | None = Field(default=None, max_length=100)
     moeda: CurrencyType | None = Field(default=None)
-    profile_image_url: str | None = None
+    profile_image_base64: str | None = None
 
 class UserPublic(BaseModel):
     """Schema para retornar dados públicos do usuário (o que a API envia)"""
@@ -69,5 +69,5 @@ class UserPublic(BaseModel):
     email: EmailStr
     nome: str | None
     moeda: CurrencyType
-    profile_image_url: str | None
+    profile_image_base64: str | None
     role: RolePublic # Retorna o objeto Role aninhado
