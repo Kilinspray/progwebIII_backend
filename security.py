@@ -1,4 +1,5 @@
 # security.py
+import os
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
@@ -6,8 +7,8 @@ from pydantic import BaseModel
 
 # --- CONFIGURAÇÕES DE SEGURANÇA ---
 # Chave secreta para assinar os tokens JWT.
-# TROQUE POR UMA STRING LONGA E ALEATÓRIA GERADA POR VOCÊ!
-SECRET_KEY = "8f3a1b2c4d5e6f70"
+# Em produção, defina a variável de ambiente SECRET_KEY no Render
+SECRET_KEY = os.getenv("SECRET_KEY", "8f3a1b2c4d5e6f70")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 # Tempo de validade do token
 
